@@ -1,38 +1,23 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const cors = require('cors');
+ const http = require('http');
+const socketio = require('socket.io');
+const app = require('./app');
 const connectDB = require('./config/db');
-const errorHandler = require('./utils/errorHandler');
-
-// Load environment variables
-dotenv.config();
-
-// Initialize Express app
-const app = express();
 
 // Connect to MongoDB
 connectDB();
 
-// Middleware
-app.use(cors()); // Enable CORS
-app.use(express.json()); // Parse JSON request bodies
+// Create server
+const server = http.createServer(app);
+const io = socketio(server);
 
-// Routes
-app.use('/api/auth', require('./routes/auth')); // Authentication routes
-app.use('/api/projects', require('./routes/project')); // Project routes
-app.use('/api/tasks', require('./routes/task')); // Task routes
+// Socket.io setup
+io.on('connection', (socket) => {
+  console.log('New client connected');
 
-// Default route
-app.get('/', (req, res) => {
-  res.send('Welcome to the Project Management App API');
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
+  });
 });
 
-// Error handler middleware (must be the last middleware)
-app.use(errorHandler);
-
-// Start the server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
